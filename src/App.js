@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, Download, Upload, Filter, X, Edit2, Trash2, Save, RefreshCw } from 'lucide-react';
+import { Plus, Search, Download, Upload, Filter, X, Edit2, Trash2, Save, RefreshCw, Home } from 'lucide-react';
 import Papa from 'papaparse';
 import { db } from './firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, writeBatch } from 'firebase/firestore';
@@ -320,8 +320,20 @@ function App() {
     <div className="App">
       <header className="header">
         <div className="header-content">
-          <h1>North County Resource Database</h1>
-          <p className="subtitle">Vista Partners Community Resource Management</p>
+          <div className="header-top">
+            <div className="header-text">
+              <h1>North County Resource Database</h1>
+              <p className="subtitle">Vista Partners Community Resource Management</p>
+            </div>
+            <a 
+              href="https://www.sdrescueoutreach.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="home-button"
+            >
+              <Home size={20} /> Home
+            </a>
+          </div>
           <div className="sync-info">
             {loading ? (
               <span className="sync-status"><RefreshCw size={16} className="spin" /> Loading...</span>
