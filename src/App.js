@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, Download, Upload, Filter, X, Edit2, Trash2, Save } from 'lucide-react';
+import { Plus, Search, Download, Upload, Filter, X, Edit2, Trash2, Save, RefreshCw } from 'lucide-react';
 import Papa from 'papaparse';
+import { db } from './firebase';
+import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, writeBatch, getDocs } from 'firebase/firestore';
 import './App.css';
 
 function App() {
@@ -14,6 +16,8 @@ function App() {
   });
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [lastSync, setLastSync] = useState(null);
   const [newEntry, setNewEntry] = useState({
     name: '',
     webAddress: '',
@@ -34,12 +38,26 @@ function App() {
   });
 
   useEffect(() => {
-    const storedData = localStorage.getItem('resourceData');
-    if (storedData) {
-      setData(JSON.parse(storedData));
-    } else {
-      loadInitialData();
-    }
+    // Set up real-time listener for Firestore
+    const unsubscribe = onSnapshot(collection(db, 'resources'), (snapshot) => {
+      const resources = [];
+      snapshot.forEach((doc) => {
+        resources.push({ id: doc.id, ...doc.data() });
+      });
+      setData(resources);
+      setLoading(false);
+      setLastSync(new Date().toLocaleTimeString());
+      
+      // If no data exists, load initial data
+      if (resources.length === 0) {
+        loadInitialData();
+      }
+    }, (error) => {
+      console.error('Error fetching data:', error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -98,8 +116,18 @@ function App() {
       { id: 48, name: "Casa Cornelia", webAddress: "Pro Bono Immigration Lawyer | Casa Cornelia Law Center", description: "Immigration Advocacy / Staff Attorney", contact: "Meghan Topolski", phone: "619-231-7788 ext 404", staffMember: "Ian", updated: "" },
       { id: 49, name: "Mobile Notary", webAddress: "", description: "Mobile Notary", contact: "Amy Saye", phone: "910-467-1700", staffMember: "Ian", updated: "" }
     ];
-    setData(initialData);
-    localStorage.setItem('resourceData', JSON.stringify(initialData));
+    
+    // Batch upload all initial data to Firestore
+    const batch = writeBatch(db);
+    initialData.forEach((item) => {
+      const docRef = doc(collection(db, 'resources'));
+      const { id, ...dataWithoutId } = item;
+      batch.set(docRef, dataWithoutId);
+    });
+    
+    batch.commit()
+      .then(() => console.log('Initial data uploaded to Firebase'))
+      .catch((error) => console.error('Error uploading initial data:', error));
   };
 
   const filterData = () => {
@@ -134,44 +162,54 @@ function App() {
     setFilteredData(filtered);
   };
 
-  const handleAddEntry = () => {
-    const entry = {
-      ...newEntry,
-      id: Math.max(...data.map(d => d.id || 0)) + 1,
-      updated: new Date().toLocaleDateString()
-    };
-    const newData = [...data, entry];
-    setData(newData);
-    localStorage.setItem('resourceData', JSON.stringify(newData));
-    setNewEntry({
-      name: '',
-      webAddress: '',
-      description: '',
-      contact: '',
-      phone: '',
-      staffMember: '',
-      updated: new Date().toLocaleDateString()
-    });
-    setShowAddForm(false);
+  const handleAddEntry = async () => {
+    try {
+      const entry = {
+        ...newEntry,
+        updated: new Date().toLocaleDateString()
+      };
+      await addDoc(collection(db, 'resources'), entry);
+      setNewEntry({
+        name: '',
+        webAddress: '',
+        description: '',
+        contact: '',
+        phone: '',
+        staffMember: '',
+        updated: new Date().toLocaleDateString()
+      });
+      setShowAddForm(false);
+    } catch (error) {
+      console.error('Error adding document:', error);
+      alert('Error adding entry. Please try again.');
+    }
   };
 
   const handleEdit = (id) => {
     setEditingId(id);
   };
 
-  const handleSaveEdit = (id, field, value) => {
-    const newData = data.map(item =>
-      item.id === id ? { ...item, [field]: value, updated: new Date().toLocaleDateString() } : item
-    );
-    setData(newData);
-    localStorage.setItem('resourceData', JSON.stringify(newData));
+  const handleSaveEdit = async (id, field, value) => {
+    try {
+      const docRef = doc(db, 'resources', id);
+      await updateDoc(docRef, {
+        [field]: value,
+        updated: new Date().toLocaleDateString()
+      });
+    } catch (error) {
+      console.error('Error updating document:', error);
+      alert('Error updating entry. Please try again.');
+    }
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this entry?')) {
-      const newData = data.filter(item => item.id !== id);
-      setData(newData);
-      localStorage.setItem('resourceData', JSON.stringify(newData));
+      try {
+        await deleteDoc(doc(db, 'resources', id));
+      } catch (error) {
+        console.error('Error deleting document:', error);
+        alert('Error deleting entry. Please try again.');
+      }
     }
   };
 
@@ -185,25 +223,34 @@ function App() {
     a.click();
   };
 
-  const importCSV = (e) => {
+  const importCSV = async (e) => {
     const file = e.target.files[0];
     if (file) {
       Papa.parse(file, {
         header: true,
-        complete: (results) => {
-          const importedData = results.data.map((row, index) => ({
-            id: Math.max(...data.map(d => d.id || 0)) + index + 1,
-            name: row['Name of Organization'] || row.name || '',
-            webAddress: row['Web Address'] || row.webAddress || '',
-            description: row['What the Organization Does'] || row.description || '',
-            contact: row['Person of Contact'] || row.contact || '',
-            phone: row['Phone Number'] || row.phone || '',
-            staffMember: row['Staff Member Connected'] || row.staffMember || '',
-            updated: row['UPDATED'] || row.updated || new Date().toLocaleDateString()
-          }));
-          const newData = [...data, ...importedData];
-          setData(newData);
-          localStorage.setItem('resourceData', JSON.stringify(newData));
+        complete: async (results) => {
+          try {
+            const batch = writeBatch(db);
+            results.data.forEach((row) => {
+              if (row['Name of Organization'] || row.name) {
+                const docRef = doc(collection(db, 'resources'));
+                batch.set(docRef, {
+                  name: row['Name of Organization'] || row.name || '',
+                  webAddress: row['Web Address'] || row.webAddress || '',
+                  description: row['What the Organization Does'] || row.description || '',
+                  contact: row['Person of Contact'] || row.contact || '',
+                  phone: row['Phone Number'] || row.phone || '',
+                  staffMember: row['Staff Member Connected'] || row.staffMember || '',
+                  updated: row['UPDATED'] || row.updated || new Date().toLocaleDateString()
+                });
+              }
+            });
+            await batch.commit();
+            alert('CSV imported successfully!');
+          } catch (error) {
+            console.error('Error importing CSV:', error);
+            alert('Error importing CSV. Please try again.');
+          }
         }
       });
     }
@@ -219,6 +266,13 @@ function App() {
         <div className="header-content">
           <h1>North County Resource Database</h1>
           <p className="subtitle">Vista Partners Community Resource Management</p>
+          <div className="sync-info">
+            {loading ? (
+              <span className="sync-status"><RefreshCw size={16} className="spin" /> Syncing...</span>
+            ) : (
+              <span className="sync-status">Last sync: {lastSync || 'Never'}</span>
+            )}
+          </div>
         </div>
       </header>
 
