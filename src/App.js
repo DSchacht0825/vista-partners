@@ -301,7 +301,19 @@ function App() {
   };
 
   const uniqueStaffMembers = useMemo(() => {
-    return [...new Set(data.map(item => item.staffMember).filter(Boolean))];
+    // Predefined staff list
+    const predefinedStaff = [
+      'Ian', 'Marsha', 'Alex', 'Daniel', 'Mario', 'Angel', 
+      'Sebastian', 'Vanessa', 'Kaylyn', 'Khalia', 'Carolina', 'Kenneth'
+    ];
+    
+    // Get staff from existing data
+    const dataStaff = data.map(item => item.staffMember).filter(Boolean);
+    
+    // Combine and deduplicate
+    const allStaff = [...new Set([...predefinedStaff, ...dataStaff])];
+    
+    return allStaff.sort();
   }, [data]);
 
   return (
@@ -437,12 +449,16 @@ function App() {
                 value={newEntry.phone}
                 onChange={(e) => setNewEntry({ ...newEntry, phone: e.target.value })}
               />
-              <input
-                type="text"
-                placeholder="Staff Member"
+              <select
                 value={newEntry.staffMember}
                 onChange={(e) => setNewEntry({ ...newEntry, staffMember: e.target.value })}
-              />
+                style={{ padding: '12px 15px', border: '2px solid #e9ecef', borderRadius: '8px', fontSize: '15px' }}
+              >
+                <option value="">Select Staff Member</option>
+                {uniqueStaffMembers.map(staff => (
+                  <option key={staff} value={staff}>{staff}</option>
+                ))}
+              </select>
             </div>
             <div className="modal-footer">
               <button className="btn btn-primary" onClick={handleAddEntry}>
