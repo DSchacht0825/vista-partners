@@ -2,14 +2,14 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
 
 // Firebase configuration
-// REPLACE WITH YOUR FIREBASE CONFIG FROM https://console.firebase.google.com
+// Your Vista Partners Firebase project
 const firebaseConfig = {
-  apiKey: "demo-key-replace-with-yours",
-  authDomain: "your-project.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef123456"
+  apiKey: "AIzaSyBRH1mqIoufRe8dAYNTv1cCyS-I9ajg9iE",
+  authDomain: "vista-partners-db.firebaseapp.com",
+  projectId: "vista-partners-db",
+  storageBucket: "vista-partners-db.firebasestorage.app",
+  messagingSenderId: "568281415398",
+  appId: "1:568281415398:web:ac6850ab1e6be0610c0527"
 };
 
 let app = null;

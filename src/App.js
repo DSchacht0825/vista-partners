@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, Search, Download, Upload, Filter, X, Edit2, Trash2, Save, RefreshCw } from 'lucide-react';
 import Papa from 'papaparse';
+import { db } from './firebase';
+import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, writeBatch } from 'firebase/firestore';
 import './App.css';
 
 function App() {
@@ -36,14 +38,39 @@ function App() {
   });
 
   useEffect(() => {
-    const storedData = localStorage.getItem('sharedResourceData');
-    if (storedData) {
-      setData(JSON.parse(storedData));
-    } else {
-      loadInitialData();
+    if (!db) {
+      // Firebase not configured, use localStorage
+      const storedData = localStorage.getItem('sharedResourceData');
+      if (storedData) {
+        setData(JSON.parse(storedData));
+      } else {
+        loadInitialData();
+      }
+      setLoading(false);
+      setLastSync(new Date().toLocaleTimeString());
+      return;
     }
-    setLoading(false);
-    setLastSync(new Date().toLocaleTimeString());
+
+    // Set up real-time listener for Firestore
+    const unsubscribe = onSnapshot(collection(db, 'resources'), (snapshot) => {
+      const resources = [];
+      snapshot.forEach((doc) => {
+        resources.push({ id: doc.id, ...doc.data() });
+      });
+      setData(resources);
+      setLoading(false);
+      setLastSync(new Date().toLocaleTimeString());
+      
+      // If no data exists, load initial data
+      if (resources.length === 0) {
+        loadInitialData();
+      }
+    }, (error) => {
+      console.error('Error fetching data:', error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const filterData = () => {
@@ -88,69 +115,113 @@ function App() {
     setLastSync(new Date().toLocaleTimeString());
   };
 
-  const loadInitialData = () => {
+  const loadInitialData = async () => {
     const initialData = [
-      { id: "1", name: "Brother Bennos", webAddress: "Support Services & Aid - Brother Benno Foundation", description: "Homeless Services/Day Center", contact: "Steven", phone: "760-410-9497", staffMember: "Ian", updated: "" },
-      { id: "2", name: "Alpha Project", webAddress: "Alpha Project Casa Raphael | Vista, CA", description: "90 day program shelter for men", contact: "Clifford", phone: "760-929-6253", staffMember: "Marsha", updated: "" },
-      { id: "3", name: "Oceanside Navigation Center", webAddress: "Oceanside Navigation Center - San Diego Rescue Mission", description: "Shelter", contact: "Jessica", phone: "442-375-9695", staffMember: "Marsha", updated: "" },
-      { id: "4", name: "Buena Creek Navigation Center Vista", webAddress: "Our Mission — Retread Housing Services", description: "30 day Shelter for men and women/ no children", contact: "Pete", phone: "442-320-6962", staffMember: "Marsha", updated: "" },
-      { id: "5", name: "Jewish family Services", webAddress: "Safe Parking | City of Vista", description: "Safe Parking Vista", contact: "", phone: "858-637-3373", staffMember: "Marsha", updated: "" },
-      { id: "6", name: "Interfaith", webAddress: "Interfaith Community Services", description: "Interfaith Recuperative Care", contact: "Kaitlyn", phone: "1-760-270-5361", staffMember: "Marsha", updated: "" },
-      { id: "7", name: "Green Oak Ranch", webAddress: "About — Green Oak Ranch", description: "Faith based Recovery Program", contact: "Junior", phone: "1-858-929-9020", staffMember: "Alex/Marsha", updated: "" },
-      { id: "8", name: "McCalaster", webAddress: "McAlister Institute", description: "Out Patient treatment for Recovery", contact: "Leilani", phone: "1-760-707-8555", staffMember: "Marsha", updated: "" },
-      { id: "9", name: "Interfaith", webAddress: "Basic Needs — Interfaith Community Services", description: "Detox, housing, Recuperative care, food", contact: "Tanea", phone: "1-760-489-6380", staffMember: "Marsha", updated: "" },
-      { id: "10", name: "Legal Aid of San Diego", webAddress: "Legal-Aid-Now", description: "legal services", contact: "", phone: "1-877-534-2524", staffMember: "Marsha", updated: "" },
-      { id: "11", name: "Home Start", webAddress: "Meet Shannon Beresford, Probation Housing Navigation", description: "Adult Probation North County Housing navigator", contact: "Norma", phone: "619-669-3458", staffMember: "Marsha", updated: "" },
-      { id: "12", name: "County of San Diego Probation Depart", webAddress: "Probation Department", description: "Probation", contact: "Jose Riveria Probation Deputy", phone: "760-806-2351", staffMember: "Marsha", updated: "" },
-      { id: "13", name: "Catholic Charities", webAddress: "Homeless Men's Services - Catholic Charities", description: "Mens Shelter", contact: "Emiliano Cerda", phone: "760-929-2322", staffMember: "Alex/Marsha", updated: "" },
-      { id: "14", name: "Think Dignity", webAddress: "HOME | Humanityshowers", description: "Mobile Shower trailers", contact: "Jordan", phone: "619-859-1412", staffMember: "Marsha", updated: "" },
-      { id: "15", name: "La Paloma", webAddress: "Home | La Paloma Healthcare Center", description: "Health Care Centers", contact: "Jennifer", phone: "760-724-2193", staffMember: "Marsha", updated: "" },
-      { id: "16", name: "Path", webAddress: "Greater San Diego | epath.org", description: "Homeless Services", contact: "Shannon", phone: "619-366-3899", staffMember: "Ian", updated: "" },
-      { id: "17", name: "Downtown Partnership", webAddress: "Unhoused Care — Downtown San Diego Partnership", description: "Family Reunification", contact: "Rose Harris", phone: "619-501-9520", staffMember: "Ian", updated: "" },
-      { id: "18", name: "McCalaster Institute", webAddress: "McAlister Institute", description: "Detox, housing, Recuperative care", contact: "Darlene", phone: "619-465-7303", staffMember: "Ian", updated: "" },
-      { id: "19", name: "Father Joe's", webAddress: "Nonprofit Services for Homelessness | Father Joe's Villages", description: "Homeless Services", contact: "Garrett", phone: "619-233-8500", staffMember: "Ian", updated: "" },
-      { id: "20", name: "Salvation Army", webAddress: "Drug and Alcohol Adult Rehabilitation Centers", description: "Homeless Services, Rehabilitation One Year Program", contact: "Kathy", phone: "619-699-2214", staffMember: "Ian", updated: "" }
+      { name: "Brother Bennos", webAddress: "Support Services & Aid - Brother Benno Foundation", description: "Homeless Services/Day Center", contact: "Steven", phone: "760-410-9497", staffMember: "Ian", updated: new Date().toLocaleDateString() },
+      { name: "Alpha Project", webAddress: "Alpha Project Casa Raphael | Vista, CA", description: "90 day program shelter for men", contact: "Clifford", phone: "760-929-6253", staffMember: "Marsha", updated: new Date().toLocaleDateString() },
+      { name: "Oceanside Navigation Center", webAddress: "Oceanside Navigation Center - San Diego Rescue Mission", description: "Shelter", contact: "Jessica", phone: "442-375-9695", staffMember: "Marsha", updated: new Date().toLocaleDateString() },
+      { name: "Buena Creek Navigation Center Vista", webAddress: "Our Mission — Retread Housing Services", description: "30 day Shelter for men and women/ no children", contact: "Pete", phone: "442-320-6962", staffMember: "Marsha", updated: new Date().toLocaleDateString() },
+      { name: "Jewish family Services", webAddress: "Safe Parking | City of Vista", description: "Safe Parking Vista", contact: "", phone: "858-637-3373", staffMember: "Marsha", updated: new Date().toLocaleDateString() },
+      { name: "Interfaith", webAddress: "Interfaith Community Services", description: "Interfaith Recuperative Care", contact: "Kaitlyn", phone: "1-760-270-5361", staffMember: "Marsha", updated: new Date().toLocaleDateString() },
+      { name: "Green Oak Ranch", webAddress: "About — Green Oak Ranch", description: "Faith based Recovery Program", contact: "Junior", phone: "1-858-929-9020", staffMember: "Alex/Marsha", updated: new Date().toLocaleDateString() },
+      { name: "McCalaster", webAddress: "McAlister Institute", description: "Out Patient treatment for Recovery", contact: "Leilani", phone: "1-760-707-8555", staffMember: "Marsha", updated: new Date().toLocaleDateString() },
+      { name: "Interfaith", webAddress: "Basic Needs — Interfaith Community Services", description: "Detox, housing, Recuperative care, food", contact: "Tanea", phone: "1-760-489-6380", staffMember: "Marsha", updated: new Date().toLocaleDateString() },
+      { name: "Legal Aid of San Diego", webAddress: "Legal-Aid-Now", description: "legal services", contact: "", phone: "1-877-534-2524", staffMember: "Marsha", updated: new Date().toLocaleDateString() }
     ];
     
-    saveToStorage(initialData);
+    if (db) {
+      // Upload to Firebase
+      const batch = writeBatch(db);
+      initialData.forEach((item) => {
+        const docRef = doc(collection(db, 'resources'));
+        batch.set(docRef, item);
+      });
+      
+      try {
+        await batch.commit();
+        console.log('Initial data uploaded to Firebase');
+      } catch (error) {
+        console.error('Error uploading initial data:', error);
+      }
+    } else {
+      // Use localStorage
+      const dataWithIds = initialData.map((item, index) => ({
+        ...item,
+        id: (index + 1).toString()
+      }));
+      saveToStorage(dataWithIds);
+    }
   };
 
-  const handleAddEntry = () => {
-    const entry = {
-      ...newEntry,
-      id: Date.now().toString(),
-      updated: new Date().toLocaleDateString()
-    };
-    const newData = [...data, entry];
-    saveToStorage(newData);
-    setNewEntry({
-      name: '',
-      webAddress: '',
-      description: '',
-      contact: '',
-      phone: '',
-      staffMember: '',
-      updated: new Date().toLocaleDateString()
-    });
-    setShowAddForm(false);
+  const handleAddEntry = async () => {
+    try {
+      const entry = {
+        ...newEntry,
+        updated: new Date().toLocaleDateString()
+      };
+      
+      if (db) {
+        await addDoc(collection(db, 'resources'), entry);
+      } else {
+        entry.id = Date.now().toString();
+        const newData = [...data, entry];
+        saveToStorage(newData);
+      }
+      
+      setNewEntry({
+        name: '',
+        webAddress: '',
+        description: '',
+        contact: '',
+        phone: '',
+        staffMember: '',
+        updated: new Date().toLocaleDateString()
+      });
+      setShowAddForm(false);
+    } catch (error) {
+      console.error('Error adding entry:', error);
+      alert('Error adding entry. Please try again.');
+    }
   };
 
   const handleEdit = (id) => {
     setEditingId(id);
   };
 
-  const handleSaveEdit = (id, field, value) => {
-    const newData = data.map(item =>
-      item.id === id ? { ...item, [field]: value, updated: new Date().toLocaleDateString() } : item
-    );
-    saveToStorage(newData);
-    setEditingId(null);
+  const handleSaveEdit = async (id, field, value) => {
+    try {
+      if (db) {
+        const docRef = doc(db, 'resources', id);
+        await updateDoc(docRef, {
+          [field]: value,
+          updated: new Date().toLocaleDateString()
+        });
+      } else {
+        const newData = data.map(item =>
+          item.id === id ? { ...item, [field]: value, updated: new Date().toLocaleDateString() } : item
+        );
+        saveToStorage(newData);
+      }
+      setEditingId(null);
+    } catch (error) {
+      console.error('Error updating entry:', error);
+      alert('Error updating entry. Please try again.');
+    }
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this entry?')) {
-      const newData = data.filter(item => item.id !== id);
-      saveToStorage(newData);
+      try {
+        if (db) {
+          await deleteDoc(doc(db, 'resources', id));
+        } else {
+          const newData = data.filter(item => item.id !== id);
+          saveToStorage(newData);
+        }
+      } catch (error) {
+        console.error('Error deleting entry:', error);
+        alert('Error deleting entry. Please try again.');
+      }
     }
   };
 
@@ -205,9 +276,9 @@ function App() {
               <span className="sync-status"><RefreshCw size={16} className="spin" /> Loading...</span>
             ) : (
               <span className="sync-status">
-                ✅ Ready to use • Last updated: {lastSync}
+                {db ? '🔥 Firebase Connected • Real-time sync active' : '✅ Local storage • Ready to use'}
                 <br />
-                <small>Want multi-user sync? Follow QUICK_SETUP.md</small>
+                <small>Last updated: {lastSync}</small>
               </span>
             )}
           </div>
