@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, Download, Upload, Filter, X, Edit2, Trash2, Save, RefreshCw, Home } from 'lucide-react';
+import { Plus, Search, Download, Upload, Filter, X, Edit2, Trash2, Save, Home, RefreshCw } from 'lucide-react';
 import Papa from 'papaparse';
 import { db } from './firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, writeBatch } from 'firebase/firestore';
@@ -39,10 +39,15 @@ function App() {
 
   useEffect(() => {
     if (!db) {
-      // Firebase not configured, use localStorage
+      // Firebase not configured, use localStorage with all 49 organizations
       const storedData = localStorage.getItem('sharedResourceData');
       if (storedData) {
-        setData(JSON.parse(storedData));
+        const parsedData = JSON.parse(storedData);
+        if (parsedData.length >= 49) {
+          setData(parsedData);
+        } else {
+          loadInitialData();
+        }
       } else {
         loadInitialData();
       }
@@ -67,6 +72,8 @@ function App() {
       }
     }, (error) => {
       console.error('Error fetching data:', error);
+      // Fallback to localStorage with full data
+      loadInitialData();
       setLoading(false);
     });
 
@@ -170,25 +177,31 @@ function App() {
     
     if (db) {
       // Upload to Firebase
-      const batch = writeBatch(db);
-      initialData.forEach((item) => {
-        const docRef = doc(collection(db, 'resources'));
-        batch.set(docRef, item);
-      });
-      
       try {
+        const batch = writeBatch(db);
+        initialData.forEach((item) => {
+          const docRef = doc(collection(db, 'resources'));
+          batch.set(docRef, item);
+        });
         await batch.commit();
         console.log('Initial data uploaded to Firebase');
       } catch (error) {
         console.error('Error uploading initial data:', error);
+        // Fallback to localStorage if Firebase fails
+        const dataWithIds = initialData.map((item, index) => ({
+          ...item,
+          id: (index + 1).toString()
+        }));
+        saveToStorage(dataWithIds);
       }
     } else {
-      // Use localStorage
+      // Use localStorage - ensure all 49 are loaded
       const dataWithIds = initialData.map((item, index) => ({
         ...item,
         id: (index + 1).toString()
       }));
       saveToStorage(dataWithIds);
+      console.log(`Loaded all ${initialData.length} organizations to localStorage`);
     }
   };
 
