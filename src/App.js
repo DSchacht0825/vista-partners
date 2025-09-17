@@ -43,7 +43,7 @@ function App() {
       const storedData = localStorage.getItem('sharedResourceData');
       if (storedData) {
         const parsedData = JSON.parse(storedData);
-        if (parsedData.length >= 49) {
+        if (parsedData.length >= 71) {
           setData(parsedData);
         } else {
           loadInitialData();
@@ -172,7 +172,29 @@ function App() {
       { name: "Universidad Popular", webAddress: "https://www.universidadpopular.org/", description: "Immigration Advocacy", contact: "Flower Alvarez-Lopez", phone: "619-648-1600", staffMember: "Ian", updated: new Date().toLocaleDateString() },
       { name: "Immigration @ North County Center", webAddress: "https://immigrationattorneyescondido.com/", description: "Immigration Advocacy", contact: "María Inés Delgado García", phone: "760-994-1690", staffMember: "Ian", updated: new Date().toLocaleDateString() },
       { name: "Casa Cornelia", webAddress: "https://www.casacornelia.org/", description: "Immigration Advocacy / Staff Attorney", contact: "Meghan Topolski", phone: "619-231-7788 ext 404", staffMember: "Ian", updated: new Date().toLocaleDateString() },
-      { name: "Mobile Notary", webAddress: "", description: "Mobile Notary", contact: "Amy Saye", phone: "910-467-1700", staffMember: "Ian", updated: new Date().toLocaleDateString() }
+      { name: "Mobile Notary", webAddress: "", description: "Mobile Notary", contact: "Amy Saye", phone: "910-467-1700", staffMember: "Ian", updated: new Date().toLocaleDateString() },
+      { name: "Interfaith Social Services", webAddress: "https://interfaithservices.org/", description: "Program Manager and social services", contact: "Jessica Pomerenke", phone: "760-489-6380 ext 110", staffMember: "Ian", updated: new Date().toLocaleDateString() },
+      { name: "Interfaith Social Services", webAddress: "https://interfaithservices.org/", description: "Tenant Based Rental Assistance", contact: "Mariluna Avila", phone: "760-489-6380", staffMember: "Ian", updated: new Date().toLocaleDateString() },
+      { name: "IHSS Aging and Independence Services", webAddress: "https://www.sandiegocounty.gov/content/sdc/hhsa/programs/ais.html", description: "IHSS Aging and Independence Services", contact: "Erika Diaz", phone: "442-266-6532", staffMember: "Ian", updated: new Date().toLocaleDateString() },
+      { name: "CPS", webAddress: "https://www.sandiegocounty.gov/content/sdc/hhsa/programs/cs.html", description: "CPS Cases, Inquiries, Reports Hotline assistance", contact: "Andria Haubruge", phone: "858-717-3139", staffMember: "Ian", updated: new Date().toLocaleDateString() },
+      { name: "Goodwill", webAddress: "https://www.goodwill.org/jobs-training/", description: "Employment Services", contact: "Diane Record", phone: "760-722-8582", staffMember: "Ian", updated: new Date().toLocaleDateString() },
+      { name: "LGBTQ North County Center", webAddress: "https://www.lgbtqresourcecenter.org/", description: "North County Resource Center", contact: "Jeri Nicolas / Office Administrator", phone: "760-994-1690", staffMember: "Ian", updated: new Date().toLocaleDateString() },
+      { name: "Alpha Project Outreach", webAddress: "https://www.alphaproject.org/programs/casa-raphael/", description: "Outreach Coordinator", contact: "Clifford Morris", phone: "619-929-6253", staffMember: "Ian", updated: new Date().toLocaleDateString() },
+      { name: "Interfaith Coastal Program", webAddress: "https://interfaithservices.org/", description: "Homeless Services - Coastal Program Manager", contact: "Christina Moi", phone: "760-215-9901", staffMember: "Ian", updated: new Date().toLocaleDateString() },
+      { name: "McAlister Kiva Women's Program", webAddress: "https://www.mcalisterinstitute.org/programs/", description: "Kiva/ Womens 90 day detox programs", contact: "", phone: "619-465-7303", staffMember: "Ian", updated: new Date().toLocaleDateString() },
+      { name: "Downtown Partnership Family Reunification", webAddress: "https://downtownsandiego.org/homelessness/unhoused-care/", description: "Family Reunification Program", contact: "Maria Levin", phone: "619-909-4260", staffMember: "Ian", updated: new Date().toLocaleDateString() },
+      { name: "Comprehensive Treatment Centers", webAddress: "https://www.ctccenters.com/", description: "Opioid addiction and recovery", contact: "Joseph Jacome", phone: "619-392-0582", staffMember: "Ian", updated: new Date().toLocaleDateString() },
+      { name: "Family Recovery Center Women", webAddress: "https://www.mhsinc.org/family-recovery-center-rehab/", description: "Mental Health Services - Women and Children Ages up to 11 years Old", contact: "Fabiola Bellinger / Melissa", phone: "760-439-6702", staffMember: "Ian", updated: new Date().toLocaleDateString() },
+      { name: "North Coastal Behavioral Health Center", webAddress: "", description: "Mental Health Services/ Crisis Center", contact: "Frank Garcia", phone: "888-724-7240", staffMember: "Ian", updated: new Date().toLocaleDateString() },
+      { name: "Serenity House", webAddress: "https://www.healthright360.org/agency/serenity-house/", description: "Long term sober living program for women", contact: "Marissa Maldando", phone: "760-809-0423", staffMember: "Ian", updated: new Date().toLocaleDateString() },
+      { name: "Community Resource Center", webAddress: "", description: "Match Housing / Food Clothing / Shelter Referral", contact: "Kim Cordova", phone: "760-753-1156 EXT. 1374", staffMember: "Ian", updated: new Date().toLocaleDateString() },
+      { name: "Recovery Moments Recovery", webAddress: "", description: "Veterans Recovery", contact: "Mark Gladden", phone: "619-363-4767", staffMember: "Ian", updated: new Date().toLocaleDateString() },
+      { name: "Legal Aid Society Vista", webAddress: "https://www.crla.org/", description: "Free Legal Services for homeless persons", contact: "", phone: "(760) 966-0511", staffMember: "Ian", updated: new Date().toLocaleDateString() },
+      { name: "Easy Access Line for Medi-Cal", webAddress: "", description: "Info Help Line for Clients To Access Medi-Cal Status, Questions and Concerns", contact: "", phone: "1-855-588-0188 PIN: 19446488", staffMember: "Ian", updated: new Date().toLocaleDateString() },
+      { name: "VisTAY House", webAddress: "https://www.luckyduckfoundation.org/", description: "Youth Transitional Housing Ages 18-25", contact: "Kim Miller", phone: "314-749-0868", staffMember: "Ian", updated: new Date().toLocaleDateString() },
+      { name: "North County Assessor Office", webAddress: "https://www.sdcounty.ca.gov/content/sdc/arcc.html", description: "Locations for Birth Certificate", contact: "", phone: "(760) 940-6868", staffMember: "Ian", updated: new Date().toLocaleDateString() },
+      { name: "Women's First Step House", webAddress: "https://www.firststephouse.org/", description: "Women's Alcohol 10 Day Detox Center", contact: "", phone: "(760) 542-6724", staffMember: "Ian", updated: new Date().toLocaleDateString() },
+      { name: "Vista Community Clinic", webAddress: "https://www.vcc.org/", description: "Low Income Heath Care Needs", contact: "Lisa Barrera (Program Manager)", phone: "760-661-5000 x1328", staffMember: "Ian", updated: new Date().toLocaleDateString() }
     ];
     
     if (db) {
