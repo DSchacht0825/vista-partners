@@ -16,6 +16,8 @@ function App() {
   });
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [editingValue, setEditingValue] = useState('');
+  const [editingField, setEditingField] = useState('');
   const [loading, setLoading] = useState(true);
   const [lastSync, setLastSync] = useState(null);
   const [newEntry, setNewEntry] = useState({
@@ -265,8 +267,10 @@ function App() {
     }
   };
 
-  const handleEdit = (id) => {
+  const handleEdit = (id, field, currentValue) => {
     setEditingId(id);
+    setEditingField(field);
+    setEditingValue(currentValue || '');
   };
 
   const handleSaveEdit = async (id, field, value) => {
@@ -284,10 +288,18 @@ function App() {
         saveToStorage(newData);
       }
       setEditingId(null);
+      setEditingValue('');
+      setEditingField('');
     } catch (error) {
       console.error('Error updating entry:', error);
       alert('Error updating entry. Please try again.');
     }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditingValue('');
+    setEditingField('');
   };
 
   const handleDelete = async (id) => {
@@ -545,17 +557,21 @@ function App() {
               <tr key={item.id}>
                 {columnVisibility.name && (
                   <td>
-                    {editingId === item.id ? (
+                    {editingId === item.id && editingField === 'name' ? (
                       <input
                         type="text"
-                        value={item.name}
-                        onChange={(e) => handleSaveEdit(item.id, 'name', e.target.value)}
-                        onBlur={() => setEditingId(null)}
-                        onKeyDown={(e) => e.key === 'Enter' && setEditingId(null)}
+                        value={editingValue}
+                        onChange={(e) => setEditingValue(e.target.value)}
+                        onBlur={() => handleSaveEdit(item.id, 'name', editingValue)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveEdit(item.id, 'name', editingValue);
+                          if (e.key === 'Escape') handleCancelEdit();
+                        }}
                         autoFocus
+                        style={{ width: '100%', padding: '4px' }}
                       />
                     ) : (
-                      <span onClick={() => handleEdit(item.id)} style={{ cursor: 'pointer' }}>
+                      <span onClick={() => handleEdit(item.id, 'name', item.name)} style={{ cursor: 'pointer' }}>
                         {item.name}
                       </span>
                     )}
@@ -563,26 +579,36 @@ function App() {
                 )}
                 {columnVisibility.webAddress && (
                   <td className="truncate">
-                    {editingId === item.id ? (
+                    {editingId === item.id && editingField === 'webAddress' ? (
                       <input
                         type="text"
-                        value={item.webAddress}
-                        onChange={(e) => handleSaveEdit(item.id, 'webAddress', e.target.value)}
-                        onBlur={() => setEditingId(null)}
-                        onKeyDown={(e) => e.key === 'Enter' && setEditingId(null)}
+                        value={editingValue}
+                        onChange={(e) => setEditingValue(e.target.value)}
+                        onBlur={() => handleSaveEdit(item.id, 'webAddress', editingValue)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveEdit(item.id, 'webAddress', editingValue);
+                          if (e.key === 'Escape') handleCancelEdit();
+                        }}
                         style={{ width: '100%', padding: '4px' }}
+                        autoFocus
                       />
                     ) : item.webAddress ? (
-                      <a
-                        href={item.webAddress.startsWith('http') ? item.webAddress : `https://${item.webAddress}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ color: '#007bff', textDecoration: 'underline' }}
+                      <span
+                        onClick={() => handleEdit(item.id, 'webAddress', item.webAddress)}
+                        style={{ cursor: 'pointer' }}
                       >
-                        {item.webAddress}
-                      </a>
+                        <a
+                          href={item.webAddress.startsWith('http') ? item.webAddress : `https://${item.webAddress}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: '#007bff', textDecoration: 'underline' }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {item.webAddress}
+                        </a>
+                      </span>
                     ) : (
-                      <span onClick={() => handleEdit(item.id)} style={{ cursor: 'pointer', color: '#999' }}>
+                      <span onClick={() => handleEdit(item.id, 'webAddress', '')} style={{ cursor: 'pointer', color: '#999' }}>
                         Click to add
                       </span>
                     )}
@@ -590,17 +616,21 @@ function App() {
                 )}
                 {columnVisibility.description && (
                   <td>
-                    {editingId === item.id ? (
+                    {editingId === item.id && editingField === 'description' ? (
                       <input
                         type="text"
-                        value={item.description}
-                        onChange={(e) => handleSaveEdit(item.id, 'description', e.target.value)}
-                        onBlur={() => setEditingId(null)}
-                        onKeyDown={(e) => e.key === 'Enter' && setEditingId(null)}
+                        value={editingValue}
+                        onChange={(e) => setEditingValue(e.target.value)}
+                        onBlur={() => handleSaveEdit(item.id, 'description', editingValue)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveEdit(item.id, 'description', editingValue);
+                          if (e.key === 'Escape') handleCancelEdit();
+                        }}
                         style={{ width: '100%', padding: '4px' }}
+                        autoFocus
                       />
                     ) : (
-                      <span onClick={() => handleEdit(item.id)} style={{ cursor: 'pointer' }}>
+                      <span onClick={() => handleEdit(item.id, 'description', item.description)} style={{ cursor: 'pointer' }}>
                         {item.description || 'Click to add'}
                       </span>
                     )}
