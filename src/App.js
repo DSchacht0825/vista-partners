@@ -109,6 +109,13 @@ function App() {
       );
     }
 
+    // Sort alphabetically by organization name
+    filtered.sort((a, b) => {
+      const nameA = (a.name || '').toLowerCase();
+      const nameB = (b.name || '').toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+
     setFilteredData(filtered);
   };
 
