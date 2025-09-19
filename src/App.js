@@ -638,17 +638,21 @@ function App() {
                 )}
                 {columnVisibility.contact && (
                   <td>
-                    {editingId === item.id ? (
+                    {editingId === item.id && editingField === 'contact' ? (
                       <input
                         type="text"
-                        value={item.contact}
-                        onChange={(e) => handleSaveEdit(item.id, 'contact', e.target.value)}
-                        onBlur={() => setEditingId(null)}
-                        onKeyDown={(e) => e.key === 'Enter' && setEditingId(null)}
+                        value={editingValue}
+                        onChange={(e) => setEditingValue(e.target.value)}
+                        onBlur={() => handleSaveEdit(item.id, 'contact', editingValue)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveEdit(item.id, 'contact', editingValue);
+                          if (e.key === 'Escape') handleCancelEdit();
+                        }}
                         style={{ width: '100%', padding: '4px' }}
+                        autoFocus
                       />
                     ) : (
-                      <span onClick={() => handleEdit(item.id)} style={{ cursor: 'pointer' }}>
+                      <span onClick={() => handleEdit(item.id, 'contact', item.contact)} style={{ cursor: 'pointer' }}>
                         {item.contact || 'Click to add'}
                       </span>
                     )}
@@ -656,17 +660,21 @@ function App() {
                 )}
                 {columnVisibility.phone && (
                   <td>
-                    {editingId === item.id ? (
+                    {editingId === item.id && editingField === 'phone' ? (
                       <input
                         type="text"
-                        value={item.phone}
-                        onChange={(e) => handleSaveEdit(item.id, 'phone', e.target.value)}
-                        onBlur={() => setEditingId(null)}
-                        onKeyDown={(e) => e.key === 'Enter' && setEditingId(null)}
+                        value={editingValue}
+                        onChange={(e) => setEditingValue(e.target.value)}
+                        onBlur={() => handleSaveEdit(item.id, 'phone', editingValue)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveEdit(item.id, 'phone', editingValue);
+                          if (e.key === 'Escape') handleCancelEdit();
+                        }}
                         style={{ width: '100%', padding: '4px' }}
+                        autoFocus
                       />
                     ) : (
-                      <span onClick={() => handleEdit(item.id)} style={{ cursor: 'pointer' }}>
+                      <span onClick={() => handleEdit(item.id, 'phone', item.phone)} style={{ cursor: 'pointer' }}>
                         {item.phone || 'Click to add'}
                       </span>
                     )}
@@ -674,13 +682,17 @@ function App() {
                 )}
                 {columnVisibility.staffMember && (
                   <td>
-                    {editingId === item.id ? (
+                    {editingId === item.id && editingField === 'staffMember' ? (
                       <select
-                        value={item.staffMember}
-                        onChange={(e) => handleSaveEdit(item.id, 'staffMember', e.target.value)}
-                        onBlur={() => setEditingId(null)}
-                        onKeyDown={(e) => e.key === 'Enter' && setEditingId(null)}
+                        value={editingValue}
+                        onChange={(e) => setEditingValue(e.target.value)}
+                        onBlur={() => handleSaveEdit(item.id, 'staffMember', editingValue)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveEdit(item.id, 'staffMember', editingValue);
+                          if (e.key === 'Escape') handleCancelEdit();
+                        }}
                         style={{ width: '100%', padding: '4px' }}
+                        autoFocus
                       >
                         <option value="">Select Staff Member</option>
                         {uniqueStaffMembers.map(staff => (
@@ -688,7 +700,7 @@ function App() {
                         ))}
                       </select>
                     ) : (
-                      <span onClick={() => handleEdit(item.id)} style={{ cursor: 'pointer' }}>
+                      <span onClick={() => handleEdit(item.id, 'staffMember', item.staffMember)} style={{ cursor: 'pointer' }}>
                         {item.staffMember || 'Click to add'}
                       </span>
                     )}
@@ -696,7 +708,7 @@ function App() {
                 )}
                 {columnVisibility.updated && <td>{item.updated}</td>}
                 <td className="actions">
-                  <button className="btn-icon" onClick={() => handleEdit(item.id)}>
+                  <button className="btn-icon" onClick={() => handleEdit(item.id, 'name', item.name)}>
                     <Edit2 size={16} />
                   </button>
                   <button className="btn-icon delete" onClick={() => handleDelete(item.id)}>
