@@ -15,9 +15,11 @@ function App() {
     services: ''
   });
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editingValue, setEditingValue] = useState('');
   const [editingField, setEditingField] = useState('');
+  const [editEntry, setEditEntry] = useState(null);
   const [loading, setLoading] = useState(true);
   const [lastSync, setLastSync] = useState(null);
   const [newEntry, setNewEntry] = useState({
@@ -242,7 +244,7 @@ function App() {
         ...newEntry,
         updated: new Date().toLocaleDateString()
       };
-      
+
       if (db) {
         await addDoc(collection(db, 'resources'), entry);
       } else {
@@ -250,7 +252,7 @@ function App() {
         const newData = [...data, entry];
         saveToStorage(newData);
       }
-      
+
       setNewEntry({
         name: '',
         webAddress: '',
@@ -264,6 +266,50 @@ function App() {
     } catch (error) {
       console.error('Error adding entry:', error);
       alert('Error adding entry. Please try again.');
+    }
+  };
+
+  const handleOpenEditForm = (item) => {
+    setEditEntry({
+      id: item.id,
+      name: item.name || '',
+      webAddress: item.webAddress || '',
+      description: item.description || '',
+      contact: item.contact || '',
+      phone: item.phone || '',
+      staffMember: item.staffMember || '',
+      updated: item.updated || new Date().toLocaleDateString()
+    });
+    setShowEditForm(true);
+  };
+
+  const handleUpdateEntry = async () => {
+    try {
+      if (db) {
+        const docRef = doc(db, 'resources', editEntry.id);
+        await updateDoc(docRef, {
+          name: editEntry.name,
+          webAddress: editEntry.webAddress,
+          description: editEntry.description,
+          contact: editEntry.contact,
+          phone: editEntry.phone,
+          staffMember: editEntry.staffMember,
+          updated: new Date().toLocaleDateString()
+        });
+      } else {
+        const newData = data.map(item =>
+          item.id === editEntry.id
+            ? { ...editEntry, updated: new Date().toLocaleDateString() }
+            : item
+        );
+        saveToStorage(newData);
+      }
+
+      setShowEditForm(false);
+      setEditEntry(null);
+    } catch (error) {
+      console.error('Error updating entry:', error);
+      alert('Error updating entry. Please try again.');
     }
   };
 
@@ -538,6 +584,67 @@ function App() {
         </div>
       )}
 
+      {showEditForm && editEntry && (
+        <div className="modal">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>Edit Entry</h2>
+              <button onClick={() => { setShowEditForm(false); setEditEntry(null); }}><X size={20} /></button>
+            </div>
+            <div className="form-grid">
+              <input
+                type="text"
+                placeholder="Organization Name"
+                value={editEntry.name}
+                onChange={(e) => setEditEntry({ ...editEntry, name: e.target.value })}
+              />
+              <input
+                type="text"
+                placeholder="Web Address"
+                value={editEntry.webAddress}
+                onChange={(e) => setEditEntry({ ...editEntry, webAddress: e.target.value })}
+              />
+              <input
+                type="text"
+                placeholder="Description"
+                value={editEntry.description}
+                onChange={(e) => setEditEntry({ ...editEntry, description: e.target.value })}
+              />
+              <input
+                type="text"
+                placeholder="Contact Person"
+                value={editEntry.contact}
+                onChange={(e) => setEditEntry({ ...editEntry, contact: e.target.value })}
+              />
+              <input
+                type="text"
+                placeholder="Phone Number"
+                value={editEntry.phone}
+                onChange={(e) => setEditEntry({ ...editEntry, phone: e.target.value })}
+              />
+              <select
+                value={editEntry.staffMember}
+                onChange={(e) => setEditEntry({ ...editEntry, staffMember: e.target.value })}
+                style={{ padding: '12px 15px', border: '2px solid #e9ecef', borderRadius: '8px', fontSize: '15px' }}
+              >
+                <option value="">Select Staff Member</option>
+                {uniqueStaffMembers.map(staff => (
+                  <option key={staff} value={staff}>{staff}</option>
+                ))}
+              </select>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-primary" onClick={handleUpdateEntry}>
+                <Save size={20} /> Update Entry
+              </button>
+              <button className="btn btn-secondary" onClick={() => { setShowEditForm(false); setEditEntry(null); }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="table-container">
         <table className="data-table">
           <thead>
@@ -708,7 +815,7 @@ function App() {
                 )}
                 {columnVisibility.updated && <td>{item.updated}</td>}
                 <td className="actions">
-                  <button className="btn-icon" onClick={() => handleEdit(item.id, 'name', item.name)}>
+                  <button className="btn-icon" onClick={() => handleOpenEditForm(item)}>
                     <Edit2 size={16} />
                   </button>
                   <button className="btn-icon delete" onClick={() => handleDelete(item.id)}>
